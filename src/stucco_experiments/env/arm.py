@@ -15,7 +15,7 @@ import matplotlib.cm as cmx
 from arm_pytorch_utilities import tensor_utils
 from base_experiments.env.pybullet_env import PybulletEnv, get_total_contact_force, make_box, state_action_color_pairs, \
     ContactInfo, make_cylinder, closest_point_on_surface
-from stucco.env.movable_sdf import PlanarMovableSDF
+from stucco.movable_sdf import PlanarMovableSDF
 from base_experiments.env.env import InfoKeys, TrajectoryLoader, handle_data_format_for_state_diff, EnvDataSource
 from base_experiments.env.panda import PandaJustGripperID
 from stucco_experiments.env.pybullet_sim import PybulletSim
