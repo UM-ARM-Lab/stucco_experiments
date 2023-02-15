@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import pybullet as p
 
+import stucco_experiments.baselines.hard_tracking
 from arm_pytorch_utilities import controller, rand
 
 from stucco_experiments.env_getters.arm import ArmGetter
@@ -29,7 +30,7 @@ class SimpleCartesianDynamics:
 class GreedyControllerWithRandomWalkOnContact(controller.Controller):
     """Sample actions then take one that leads to lowest cost; take a random action after experiencing contact"""
 
-    def __init__(self, env, dynamics, cost_to_go, contact_set: tracking.ContactSetHard, u_min, u_max, num_samples=100,
+    def __init__(self, env, dynamics, cost_to_go, contact_set: stucco_experiments.baselines.hard_tracking.ContactSetHard, u_min, u_max, num_samples=100,
                  walk_length=3, plot_contact_set=False):
         super().__init__()
         self.env = env
@@ -49,7 +50,7 @@ class GreedyControllerWithRandomWalkOnContact(controller.Controller):
         self.plot_contact_set = plot_contact_set
         if self.plot_contact_set:
             self.contact_set = contact_set
-            self.ground_truth_contact_map: Dict[int, tracking.ContactObject] = {}
+            self.ground_truth_contact_map: Dict[int, stucco_experiments.baselines.hard_tracking.ContactObject] = {}
 
     def command(self, obs, info=None):
         d = self.dynamics.device
@@ -94,7 +95,7 @@ def collect_tracking(level, seed_offset=0, trials=50, trial_length=300, force_gu
         return env.state_distance_two_arg(state, goal)
 
     def create_contact_object():
-        return tracking.ContactUKF(None, contact_params, hard_contact_params)
+        return stucco_experiments.baselines.hard_tracking.ContactUKF(None, contact_params, hard_contact_params)
 
     ctrl = controller.Controller()
     save_dir = '{}{}'.format(ArmGetter.env_dir, level)
@@ -108,8 +109,8 @@ def collect_tracking(level, seed_offset=0, trials=50, trial_length=300, force_gu
         # use mode p.GUI to see what the trials look like
         seed = rand.seed(seed_offset + offset)
 
-        contact_set = tracking.ContactSetHard(contact_params, hard_params=hard_contact_params,
-                                              contact_object_factory=create_contact_object)
+        contact_set = stucco_experiments.baselines.hard_tracking.ContactSetHard(contact_params, hard_params=hard_contact_params,
+                                                                                contact_object_factory=create_contact_object)
         ctrl = GreedyControllerWithRandomWalkOnContact(env, SimpleCartesianDynamics(), cost_to_go,
                                                        contact_set,
                                                        u_min,

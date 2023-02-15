@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 
+import stucco_experiments.baselines.hard_tracking
 from arm_pytorch_utilities import tensor_utils
 from base_experiments.env.pybullet_env import PybulletEnv, get_total_contact_force, make_box, state_action_color_pairs, \
     ContactInfo, make_cylinder, closest_point_on_surface
@@ -465,7 +466,7 @@ class ArmEnv(PybulletEnv):
         self._dd.clear_visualization_after('{}a'.format(base_name), j + 1)
 
     def visualize_contact_set(self, contact_set: tracking.ContactSet):
-        if isinstance(contact_set, tracking.ContactSetHard):
+        if isinstance(contact_set, stucco_experiments.baselines.hard_tracking.ContactSetHard):
             # clear all previous markers because we don't know which one was removed
             if len(self._contact_debug_names) > len(contact_set):
                 for name in self._contact_debug_names:

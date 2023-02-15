@@ -13,6 +13,8 @@ import math
 from threading import Lock
 
 import numpy as np
+
+import stucco_experiments.baselines.hard_tracking
 from pytorch_kinematics import transforms as tf
 from base_experiments.util import move_figure
 
@@ -433,7 +435,7 @@ class RealArmEnv(Env):
         pass
 
     def visualize_contact_set(self, contact_set: tracking.ContactSet):
-        if isinstance(contact_set, tracking.ContactSetHard):
+        if isinstance(contact_set, stucco_experiments.baselines.hard_tracking.ContactSetHard):
             # clear all previous markers because we don't know which one was removed
             if len(self._contact_debug_names) > len(contact_set):
                 for name in set.union(*self._contact_debug_names):

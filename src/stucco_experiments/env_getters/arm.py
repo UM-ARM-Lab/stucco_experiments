@@ -1,5 +1,6 @@
 import typing
 
+import stucco_experiments.baselines.hard_tracking
 from arm_pytorch_utilities import load_data
 from arm_pytorch_utilities.optim import get_device
 from stucco import tracking
@@ -36,13 +37,13 @@ class ArmGetter(EnvGetter):
         return params
 
     @staticmethod
-    def hard_contact_parameters(env: arm.ArmEnv, **kwargs) -> tracking.HardContactParameters:
-        params = tracking.HardContactParameters(state_to_pos=env.get_ee_pos_states,
-                                                pos_to_state=env.get_state_ee_pos,
-                                                control_similarity=env.control_similarity,
-                                                state_to_reaction=env.get_ee_reaction,
-                                                weight_multiplier=0.1,
-                                                ignore_below_weight=0.2)
+    def hard_contact_parameters(env: arm.ArmEnv, **kwargs) -> stucco_experiments.baselines.hard_tracking.HardContactParameters:
+        params = stucco_experiments.baselines.hard_tracking.HardContactParameters(state_to_pos=env.get_ee_pos_states,
+                                                                                  pos_to_state=env.get_state_ee_pos,
+                                                                                  control_similarity=env.control_similarity,
+                                                                                  state_to_reaction=env.get_ee_reaction,
+                                                                                  weight_multiplier=0.1,
+                                                                                  ignore_below_weight=0.2)
         if kwargs is not None:
             for k, v in kwargs.items():
                 setattr(params, k, v)

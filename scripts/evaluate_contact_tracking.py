@@ -15,6 +15,7 @@ import re
 import matplotlib.pyplot as plt
 import typing
 
+import stucco_experiments.baselines.hard_tracking
 from arm_pytorch_utilities import tensor_utils, rand
 from sklearn.cluster import KMeans, DBSCAN, Birch
 
@@ -124,7 +125,8 @@ class OurMethodFactory:
 
 
 class OurMethodHard(OurMethodFactory):
-    def __init__(self, contact_object_class: Type[tracking.ContactObject] = tracking.ContactUKF, **kwargs):
+    def __init__(self, contact_object_class: Type[
+        stucco_experiments.baselines.hard_tracking.ContactObject] = stucco_experiments.baselines.hard_tracking.ContactUKF, **kwargs):
         self.contact_object_class = contact_object_class
         super(OurMethodHard, self).__init__(**kwargs)
 
@@ -145,11 +147,11 @@ class OurMethodHard(OurMethodFactory):
         def create_contact_object():
             return self.contact_object_class(None, contact_params, hard_contact_params)
 
-        return tracking.ContactSetHard(contact_params, hard_params=hard_contact_params,
-                                       contact_object_factory=create_contact_object,
-                                       device=get_device())
+        return stucco_experiments.baselines.hard_tracking.ContactSetHard(contact_params, hard_params=hard_contact_params,
+                                                                         contact_object_factory=create_contact_object,
+                                                                         device=get_device())
 
-    def get_contact_point_results(self, contact_set: tracking.ContactSetHard) -> typing.Tuple[
+    def get_contact_point_results(self, contact_set: stucco_experiments.baselines.hard_tracking.ContactSetHard) -> typing.Tuple[
         torch.tensor, torch.tensor]:
         contact_pts = torch.cat([cc.points for cc in contact_set], dim=0)
         pt_weights = torch.cat([cc.weight.repeat(len(cc.points)) for cc in contact_set], dim=0)

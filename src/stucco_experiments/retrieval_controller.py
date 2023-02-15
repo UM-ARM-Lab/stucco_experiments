@@ -4,6 +4,8 @@ import typing
 import numpy as np
 import pybullet as p
 import torch
+
+import stucco_experiments.baselines.hard_tracking
 from arm_pytorch_utilities import rand
 from arm_pytorch_utilities.math_utils import angular_diff
 from arm_pytorch_utilities.controller import Controller
@@ -31,7 +33,7 @@ from base_experiments.env.env import Visualizer
 class RetrievalController(Controller):
 
     def __init__(self, contact_detector: detection.ContactDetector, nu, dynamics, cost_to_go,
-                 contact_set: tracking.ContactSetHard, u_min, u_max, num_samples=100,
+                 contact_set: stucco_experiments.baselines.hard_tracking.ContactSetHard, u_min, u_max, num_samples=100,
                  walk_length=3):
         super().__init__()
         self.contact_detector = contact_detector
@@ -348,7 +350,7 @@ class HardTrackingIterator:
         self.contact_objs = contact_objs
 
     def __next__(self):
-        object: tracking.ContactObject = next(self.contact_objs)
+        object: stucco_experiments.baselines.hard_tracking.ContactObject = next(self.contact_objs)
         return object.points
 
 
@@ -356,19 +358,19 @@ class OurHardTrackingMethod(OurTrackingMethod):
     def __init__(self, env, contact_params, hard_contact_params, **kwargs):
         self.contact_params = contact_params
         self.hard_contact_params = hard_contact_params
-        self._contact_set = tracking.ContactSetHard(self.contact_params, hard_params=hard_contact_params,
-                                                    contact_object_factory=self.create_contact_object)
+        self._contact_set = stucco_experiments.baselines.hard_tracking.ContactSetHard(self.contact_params, hard_params=hard_contact_params,
+                                                                                      contact_object_factory=self.create_contact_object)
         super(OurHardTrackingMethod, self).__init__(env, **kwargs)
 
     @property
-    def contact_set(self) -> tracking.ContactSetHard:
+    def contact_set(self) -> stucco_experiments.baselines.hard_tracking.ContactSetHard:
         return self._contact_set
 
     def __iter__(self):
         return HardTrackingIterator(iter(self.contact_set))
 
     def create_contact_object(self):
-        return tracking.ContactUKF(None, self.contact_params, self.hard_contact_params)
+        return stucco_experiments.baselines.hard_tracking.ContactUKF(None, self.contact_params, self.hard_contact_params)
 
 
 class SklearnPredeterminedController(RetrievalPredeterminedController):
