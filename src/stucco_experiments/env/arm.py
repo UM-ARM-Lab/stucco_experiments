@@ -21,7 +21,7 @@ from base_experiments.env.panda import PandaJustGripperID
 from stucco_experiments.env.pybullet_sim import PybulletSim
 from base_experiments import cfg
 from stucco import tracking
-from stucco.defines import NO_CONTACT_ID
+from base_experiments.defines import NO_CONTACT_ID
 from stucco.detection import ContactDetector
 from stucco.detection_impl import PybulletResidualPlanarContactSensor
 
