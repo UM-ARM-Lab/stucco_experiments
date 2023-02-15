@@ -18,7 +18,7 @@ from base_experiments.util import move_figure
 
 from mmint_camera_utils.camera_utils.camera_utils import bilinear_interpolate, project_depth_points
 from stucco import tracking
-from stucco.detection_impl import PybulletResidualPlanarContactSensor
+from stucco_experiments.detection_impl import PybulletResidualPlanarContactSensor
 from stucco.detection import ContactSensor
 from base_experiments import cfg
 from stucco.movable_sdf import PlanarMovableSDF

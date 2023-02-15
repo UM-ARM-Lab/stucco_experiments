@@ -23,7 +23,7 @@ from base_experiments import cfg
 from stucco import tracking
 from base_experiments.defines import NO_CONTACT_ID
 from stucco.detection import ContactDetector
-from stucco.detection_impl import PybulletResidualPlanarContactSensor
+from stucco_experiments.detection_impl import PybulletResidualPlanarContactSensor
 
 logger = logging.getLogger(__name__)
 
