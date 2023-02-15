@@ -32,7 +32,6 @@ from base_experiments.env.pybullet_env import state_action_color_pairs
 from stucco_experiments.retrieval_controller import rot_2d_mat_to_angle, \
     sample_model_points, pose_error, TrackingMethod, OurSoftTrackingMethod, \
     SklearnTrackingMethod, KeyboardController, PHDFilterTrackingMethod
-from itar.controller import OurSoftTrackingWithRummagingMethod
 
 ch = logging.StreamHandler()
 fh = logging.FileHandler(os.path.join(cfg.ROOT_DIR, "logs", "{}.log".format(datetime.now())))
@@ -353,21 +352,8 @@ def grasp_at_pose(env, pose):
 
 
 def main(env, method_name, seed=0):
-    def icpev_policy_factory():
-        testObjId = env.create_target_obj([0, 0, 0], [0, 0, 0, 1], p.URDF_USE_INERTIA_FROM_FILE)
-        p.changeDynamics(testObjId, -1, mass=0)
-        p.changeVisualShape(testObjId, -1, rgbaColor=[0, 0, 0, 0])
-        # disable collision between object and every other object
-        for objId in env.objects:
-            p.setCollisionFilterPair(objId, testObjId, -1, -1, 0)
-
-        return exploration.ICPEVExplorationPolicy(testObjId)
-
     methods_to_run = {
         'ours': OurSoftTrackingMethod(env, RetrievalGetter.contact_parameters(env), arm.ArmMovableSDF(env)),
-        'ours-rummage': OurSoftTrackingWithRummagingMethod(env, RetrievalGetter.contact_parameters(env),
-                                                           arm.ArmMovableSDF(env),
-                                                           policy_factory=icpev_policy_factory),
         'online-birch': SklearnTrackingMethod(env, OnlineAgglomorativeClustering, Birch, n_clusters=None,
                                               inertia_ratio=0.2,
                                               threshold=0.08),
