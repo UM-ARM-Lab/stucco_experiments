@@ -1,7 +1,6 @@
 import argparse
 import copy
 import time
-import math
 import torch
 import pybullet as p
 import numpy as np
@@ -10,8 +9,6 @@ import os
 from datetime import datetime
 
 from sklearn.cluster import Birch, DBSCAN, KMeans
-
-import chsel.initialization
 
 from stucco_experiments.baselines.cluster import OnlineAgglomorativeClustering, OnlineSklearnFixedClusters
 from base_experiments.defines import NO_CONTACT_ID
@@ -22,17 +19,15 @@ from arm_pytorch_utilities import rand, tensor_utils, math_utils
 
 from base_experiments import cfg
 from stucco import tracking
-from itar import exploration
-from chsel_experiments import registration
 from stucco_experiments.env import arm
 from stucco_experiments.env.arm import Levels
 from stucco_experiments.env_getters.arm import RetrievalGetter
-from base_experiments.env.pybullet_env import state_action_color_pairs
 
 from stucco_experiments.retrieval_controller import rot_2d_mat_to_angle, \
     sample_model_points, pose_error, TrackingMethod, OurSoftTrackingMethod, \
     SklearnTrackingMethod, KeyboardController, PHDFilterTrackingMethod
 from base_experiments.util import MakedirsFileHandler
+from stucco_experiments import registration
 
 ch = logging.StreamHandler()
 fh = MakedirsFileHandler(os.path.join(cfg.LOG_DIR, "{}.log".format(datetime.now())))
@@ -44,64 +39,6 @@ logging.basicConfig(level=logging.INFO,
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 logger = logging.getLogger(__name__)
-
-
-def test_icp(env):
-    z = env._observe_ee(return_z=True)[-1]
-    # test ICP using fixed set of points
-    o = p.getBasePositionAndOrientation(env.target_object_id)[0]
-    contact_points = np.stack([
-        [o[0] - 0.045, o[1] - 0.05],
-        [o[0] - 0.05, o[1] - 0.01],
-        [o[0] - 0.045, o[1] + 0.02],
-        [o[0] - 0.045, o[1] + 0.04],
-        [o[0] - 0.01, o[1] + 0.05]
-    ])
-    actions = np.stack([
-        [0.7, -0.7],
-        [0.9, 0.2],
-        [0.8, 0],
-        [0.5, 0.6],
-        [0, -0.8]
-    ])
-    contact_points = np.stack(contact_points)
-
-    angle = 0.5
-    dx = -0.4
-    dy = 0.2
-    c, s = math.cos(angle), math.sin(angle)
-    rot = np.array([[c, -s],
-                    [s, c]])
-    contact_points = np.dot(contact_points, rot.T)
-    contact_points[:, 0] += dx
-    contact_points[:, 1] += dy
-    actions = np.dot(actions, rot.T)
-
-    state_c, action_c = state_action_color_pairs[0]
-    env.visualize_state_actions("fixed", contact_points, actions, state_c, action_c, 0.05)
-
-    model_points, model_normals, _ = sample_model_points(env.target_object_id, num_points=50, force_z=z, seed=0,
-                                                         name="cheezit")
-    for i, pt in enumerate(model_points):
-        env.vis.draw_point(f"mpt.{i}", pt, color=(0, 0, 1), length=0.003)
-
-    # perform ICP and visualize the transformed points
-    # history, transformed_contact_points = registration.registration(model_points[:, :2], contact_points,
-    #                                               point_pairs_threshold=len(contact_points), verbose=True)
-
-    # better to have few A than few B and then invert the transform
-    T, distances, i = registration.icp_2(contact_points, model_points[:, :2])
-    # transformed_contact_points = np.dot(np.c_[contact_points, np.ones((contact_points.shape[0], 1))], T.T)
-    # T, distances, i = registration.icp_2(model_points[:, :2], contact_points)
-    transformed_model_points = np.dot(np.c_[model_points[:, :2], np.ones((model_points.shape[0], 1))],
-                                      np.linalg.inv(T).T)
-    for i, pt in enumerate(transformed_model_points):
-        pt = [pt[0], pt[1], z]
-        env.vis.draw_point(f"tmpt.{i}", pt, color=(0, 1, 0), length=0.003)
-
-    while True:
-        env.step([0, 0])
-        time.sleep(0.2)
 
 
 def run_retrieval(env, method: TrackingMethod, seed=0, ctrl_noise_max=0.005):
@@ -196,8 +133,7 @@ def run_retrieval(env, method: TrackingMethod, seed=0, ctrl_noise_max=0.005):
     simTime = 0
 
     B = 30
-    device = model_points.device
-    best_tsf_guess = chsel.initialization.random_upright_transforms(B, dtype, device)
+    best_tsf_guess = None
     guess_pose = None
     pose_error_per_step = {}
 
@@ -228,8 +164,7 @@ def run_retrieval(env, method: TrackingMethod, seed=0, ctrl_noise_max=0.005):
                 penetration = [object_robot_penetration_score(pt_to_config, all_configs, T[b], mph) for b in
                                range(T.shape[0])]
                 penetration_score = np.abs(penetration)
-                score = penetration_score + exploration.icp_plausible_score(T, distances, dim=2)
-                best_tsf_index = np.argmin(score)
+                best_tsf_index = np.argmin(penetration_score)
 
                 # pick object with lowest variance in its translation estimate
                 translations = T[:, :2, 2]
@@ -286,7 +221,7 @@ def run_retrieval(env, method: TrackingMethod, seed=0, ctrl_noise_max=0.005):
     in_label_contact = contact_id != NO_CONTACT_ID
 
     m = clustering_metrics(contact_id[in_label_contact], labels[in_label_contact])
-    contact_error = compute_contact_error(None, moved_points, env=env, visualize=False)
+    contact_error = compute_contact_error(None, moved_points, None, env=env, visualize=False)
     cme = np.mean(np.abs(contact_error))
 
     grasp_at_pose(env, guess_pose)

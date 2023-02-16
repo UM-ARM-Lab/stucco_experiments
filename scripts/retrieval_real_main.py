@@ -2,6 +2,8 @@
 import argparse
 import enum
 import time
+import os
+from datetime import datetime
 
 import colorama
 import moveit_commander
@@ -21,15 +23,13 @@ from stucco_experiments.retrieval_controller import RetrievalPredeterminedContro
     SklearnTrackingMethod, TrackingMethod, OurSoftTrackingMethod, SklearnPredeterminedController, KeyboardDirPressed, \
     PHDFilterTrackingMethod, PHDPredeterminedController
 from base_experiments.env.real_env import VideoLogger
+from stucco_experiments import registration
 from stucco_experiments.env.arm import Levels
 from base_experiments.env_getters.getter import EnvGetter
-import os
-from datetime import datetime
 
 from base_experiments import cfg
 from stucco_experiments.env import arm_real
 from stucco import tracking
-from chsel_experiments import registration
 from arm_pytorch_utilities.math_utils import rotate_wrt_origin
 from base_experiments.util import MakedirsFileHandler
 
