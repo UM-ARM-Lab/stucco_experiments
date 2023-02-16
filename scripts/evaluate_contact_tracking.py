@@ -477,6 +477,9 @@ if __name__ == "__main__":
 
     for res_dir in dirs:
         full_dir = os.path.join(cfg.DATA_DIR, res_dir)
+        if not os.path.exists(full_dir):
+            logger.error("Missing collected data in %s, skipping", full_dir)
+            continue
 
         files = os.listdir(full_dir)
         files = sorted(files)
