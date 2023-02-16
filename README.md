@@ -18,10 +18,9 @@ If you use it, please cite
 
 ## Installation (experiments)
 
-1. install [pytorch3d](https://github.com/facebookresearch/pytorch3d) (various ways, but probably easiest through conda)
-2. install [base experiments](https://github.com/UM-ARM-Lab/base_experiments) by following its readme
-3. clone repository locally and `cd` into it
-4. `pip install -e .`
+1. install [base experiments](https://github.com/UM-ARM-Lab/base_experiments) by following its readme
+2. clone repository locally and `cd` into it
+3. `pip install -e .`
 
 ## Usage
 This is the full experiments to reproduce the results from the paper.
