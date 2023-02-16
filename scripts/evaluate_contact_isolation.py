@@ -11,9 +11,10 @@ from stucco_experiments.evaluation import get_file_metainfo
 
 from base_experiments import cfg
 from base_experiments.env.env import InfoKeys
+from base_experiments.util import MakedirsFileHandler
 
 ch = logging.StreamHandler()
-fh = logging.FileHandler(os.path.join(cfg.ROOT_DIR, "logs", "{}.log".format(datetime.now())))
+fh = MakedirsFileHandler(os.path.join(cfg.LOG_DIR, "{}.log".format(datetime.now())))
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(levelname)s %(asctime)s %(pathname)s:%(lineno)d] %(message)s',

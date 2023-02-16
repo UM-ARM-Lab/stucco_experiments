@@ -16,7 +16,8 @@ from sklearn.cluster import Birch, DBSCAN, KMeans
 
 from stucco_experiments.baselines.cluster import OnlineAgglomorativeClustering, OnlineSklearnFixedClusters
 from stucco_experiments.evaluation import object_robot_penetration_score
-from stucco_experiments.retrieval_controller import RetrievalPredeterminedController, sample_model_points, rot_2d_mat_to_angle, \
+from stucco_experiments.retrieval_controller import RetrievalPredeterminedController, sample_model_points, \
+    rot_2d_mat_to_angle, \
     SklearnTrackingMethod, TrackingMethod, OurSoftTrackingMethod, SklearnPredeterminedController, KeyboardDirPressed, \
     PHDFilterTrackingMethod, PHDPredeterminedController
 from base_experiments.env.real_env import VideoLogger
@@ -30,6 +31,7 @@ from stucco_experiments.env import arm_real
 from stucco import tracking
 from chsel_experiments import registration
 from arm_pytorch_utilities.math_utils import rotate_wrt_origin
+from base_experiments.util import MakedirsFileHandler
 
 try:
     import rospy
@@ -46,7 +48,7 @@ ask_before_moving = True
 CONTACT_POINT_SIZE = (0.01, 0.01, 0.3)
 
 ch = logging.StreamHandler()
-fh = logging.FileHandler(os.path.join(cfg.ROOT_DIR, "logs", "{}.log".format(datetime.now())))
+fh = MakedirsFileHandler(os.path.join(cfg.LOG_DIR, "{}.log".format(datetime.now())))
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(levelname)s %(asctime)s %(pathname)s:%(lineno)d] %(message)s',

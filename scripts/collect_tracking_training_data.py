@@ -11,7 +11,6 @@ import stucco_experiments.baselines.hard_tracking
 from arm_pytorch_utilities import controller, rand
 
 from stucco_experiments.env_getters.arm import ArmGetter
-from stucco import tracking
 from stucco_experiments.env import arm
 from stucco_experiments.env.arm import task_map, Levels
 

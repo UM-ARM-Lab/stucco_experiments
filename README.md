@@ -19,8 +19,9 @@ If you use it, please cite
 ## Installation (experiments)
 
 1. install [pytorch3d](https://github.com/facebookresearch/pytorch3d) (various ways, but probably easiest through conda)
-2. clone repository locally and `cd` into it
-2. `pip install -e .`
+2. install [base experiments](https://github.com/UM-ARM-Lab/base_experiments) by following its readme
+3. clone repository locally and `cd` into it
+4. `pip install -e .`
 
 ## Usage
 This is the full experiments to reproduce the results from the paper.
@@ -41,7 +42,7 @@ python collect_tracking_training_data.py --task SELECT4 --gui
 ```
 
 2. evaluate all tracking methods on this data; you can find the clustering result and ground truth for each trial
-   in `data/cluster_res`
+   in `~/experiments/data/cluster_res`
 
 ```shell
 python evaluate_contact_tracking.py

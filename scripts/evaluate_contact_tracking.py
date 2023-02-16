@@ -33,13 +33,14 @@ from stucco_experiments.env import arm
 from base_experiments.env import pybullet_env as env_base
 from base_experiments.env.env import InfoKeys
 from stucco_experiments.env_getters.arm import ArmGetter
+from base_experiments.util import MakedirsFileHandler
 
 from stucco_experiments.baselines.cluster import process_labels_with_noise, OnlineSklearnFixedClusters, \
     OnlineAgglomorativeClustering
 from stucco_experiments.baselines.gmphd import GMPHDWrapper
 
 ch = logging.StreamHandler()
-fh = logging.FileHandler(os.path.join(cfg.ROOT_DIR, "logs", "{}.log".format(datetime.now())))
+fh = MakedirsFileHandler(os.path.join(cfg.LOG_DIR, "{}.log".format(datetime.now())))
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(levelname)s %(asctime)s %(pathname)s:%(lineno)d] %(message)s',
@@ -238,6 +239,8 @@ def phd_filter_factory(**kwargs):
 
         valid = np.linalg.norm(contact_pts, axis=1) > 0.
         dobj = info[InfoKeys.DEE_IN_CONTACT]
+        if torch.is_tensor(dobj):
+            dobj = dobj.cpu().numpy()
         for i in range(len(contact_pts)):
             if not valid[i]:
                 continue
