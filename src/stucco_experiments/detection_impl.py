@@ -69,6 +69,7 @@ class PybulletResidualPlanarContactSensor(ResidualPlanarContactSensor):
 
         cached_points, cached_normals = self._init_sample_surface_points_in_canonical_pose(visualizer=visualizer)
 
+        os.makedirs(os.path.dirname(fullname), exist_ok=True)
         torch.save((cached_points, cached_normals), fullname)
         logger.info("robot points and normals saved to %s", fullname)
         return cached_points, cached_normals

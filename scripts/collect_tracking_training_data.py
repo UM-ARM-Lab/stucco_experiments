@@ -176,6 +176,6 @@ if __name__ == "__main__":
     level = task_map[args.task]
     accepted_levels = [Levels.SELECT1, Levels.SELECT2, Levels.SELECT3, Levels.SELECT4]
     if level not in accepted_levels:
-        raise RuntimeError(f"Task must be one of {accepted_levels}")
+        raise RuntimeError(f"Task {args.task}:{level} must be one of {accepted_levels}")
     for offset in [7]:
         collect_tracking(level, seed_offset=offset, trials=40, force_gui=args.gui)
