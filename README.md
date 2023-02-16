@@ -30,6 +30,7 @@ See the [website](https://johnsonzhong.me/projects/stucco/) for videos and a hig
 
 
 ## Reproduce Paper
+All scripts are under the `scripts` directory. Run everything while in this directory. 
 
 1. collect training data
 
