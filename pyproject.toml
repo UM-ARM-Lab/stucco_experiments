@@ -57,6 +57,16 @@ dependencies = [# Optional
     'matplotlib',
     'arm-base-experiments',
     'stucco',
+    'pybullet',
+    'pynput',
+    'trimesh',
+    'window-recorder',
+    'pymeshlab',
+    'mesh-to-sdf',
+    'scipy',
+    'scikit-learn',
+    'gpytorch',
+    'open3d',
 ]
 
 # List additional groups of dependencies here (e.g. development
