@@ -37,7 +37,7 @@ from tf2_geometry_msgs import WrenchStamped
 from arm_robots.victor import Victor
 from bubble_utils.bubble_med.bubble_med import BubbleMed
 from bubble_utils.bubble_parsers.bubble_parser import BubbleParser
-from bubble_utils.bubble_tools.bubble_img_tools import process_bubble_img
+from bubble_tools.bubble_tools.bubble_img_tools import process_bubble_img
 from wsg_50_utils.wsg_50_gripper import WSG50Gripper
 
 # runner imports
