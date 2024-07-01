@@ -29,7 +29,8 @@ from base_experiments.env.env import InfoKeys, TrajectoryLoader, Env, handle_dat
 from stucco.detection import ContactDetector
 from geometry_msgs.msg import Pose
 
-from base_experiments.env.pybullet_env import closest_point_on_surface, ContactInfo, DebugDrawer, state_action_color_pairs
+from base_experiments.env.pybullet_env import closest_point_on_surface, ContactInfo, DebugDrawer, \
+    state_action_color_pairs
 from base_experiments.env.real_env import CombinedVisualizer
 
 from victor_hardware_interface_msgs.msg import ControlMode, MotionStatus
@@ -304,20 +305,8 @@ class RealArmEnv(Env):
 
             # observe and save contact info
             info = {}
-
             pose = pose_msg_to_pos_quaternion(self.robot.get_link_pose(self.EE_LINK_NAME))
-            pos = pose[0]
-            orientation = pose[1]
-            if self._need_to_force_planar:
-                # manually make observed point planar
-                orientation = list(p.getEulerFromQuaternion(pose[1]))
-                orientation[1] = 0
-                orientation[2] = 0
-            if self.contact_detector.observe_residual(wr_np, (pos, orientation)):
-                dx = np.subtract(pos, self.last_ee_pos)
-                self.contact_detector.observe_dx(dx[:2])
-                info[InfoKeys.DEE_IN_CONTACT] = dx
-            self.last_ee_pos = pos
+            self._observe_contact(pose, wr_np, info)
 
             info[InfoKeys.HIGH_FREQ_EE_POSE] = np.r_[pose[0], pose[1]]
 
@@ -329,6 +318,20 @@ class RealArmEnv(Env):
                 if key not in self._single_step_contact_info:
                     self._single_step_contact_info[key] = []
                 self._single_step_contact_info[key].append(value)
+
+    def _observe_contact(self, pose, wrench_np, info):
+        pos = pose[0]
+        orientation = pose[1]
+        if self._need_to_force_planar:
+            # manually make observed point planar
+            orientation = list(p.getEulerFromQuaternion(pose[1]))
+            orientation[1] = 0
+            orientation[2] = 0
+        if self.contact_detector.observe_residual(wrench_np, (pos, orientation)):
+            dx = np.subtract(pos, self.last_ee_pos)
+            self.contact_detector.observe_dx(dx[:2])
+            info[InfoKeys.DEE_IN_CONTACT] = dx
+        self.last_ee_pos = pos
 
     def _fix_torque_to_planar(self, wr_np, fix_threshold=0.065):
         # make force more rectilinear - tilting along z is too powerful
