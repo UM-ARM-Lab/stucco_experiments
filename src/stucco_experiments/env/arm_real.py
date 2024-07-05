@@ -165,6 +165,7 @@ class RealArmEnv(Env):
         self._contact_debug_names = []
         # for Victor, have to force orientation to be planar in several places
         self._need_to_force_planar = True
+        self.motion_frame_transformer = None
 
         # additional information accumulated in a single step
         self._single_step_contact_info = {}
@@ -282,42 +283,52 @@ class RealArmEnv(Env):
             wr.wrench.torque.x = w.a
             wr.wrench.torque.y = w.b
             wr.wrench.torque.z = w.c
-            wr_world = self.robot.tf_wrapper.transform_to_frame(wr, self.WORLD_FRAME)
-            wr = wr_world.wrench
 
-            # clean with static wrench
-            wr_np = np.array([wr.force.x, wr.force.y, wr.force.z, wr.torque.x, wr.torque.y, wr.torque.z])
-            if self.static_wrench is None:
-                self._temp_wrenches.append(wr_np)
-                return
-            wr_np -= self.static_wrench
+        if self.motion_frame_transformer is not None:
+            wr = self.motion_frame_transformer.motion_status_to_ee_wrench(wr)
+            wr.header.frame_id = self.EE_LINK_NAME
+        wr_world = self.robot.tf_wrapper.transform_to_frame(wr, self.WORLD_FRAME)
+        wr = wr_world.wrench
 
-            # wr_np = self._fix_torque_to_planar(wr_np)
+        # clean with static wrench
+        wr_np = np.array([wr.force.x, wr.force.y, wr.force.z, wr.torque.x, wr.torque.y, wr.torque.z])
+        if self.static_wrench is None:
+            self._temp_wrenches.append(wr_np)
+            return
+        wr_np -= self.static_wrench
+        logger.info(wr_np)
 
-            # visualization
-            wr = WrenchStamped()
-            wr.header.frame_id = self.WORLD_FRAME
-            wr.wrench.force.x, wr.wrench.force.y, wr.wrench.force.z, wr.wrench.torque.x, wr.wrench.torque.y, wr.wrench.torque.z = wr_np
+        # wr_np = self._fix_torque_to_planar(wr_np)
 
-            # print residual
-            residual = wr_np.T @ self.contact_detector.residual_precision @ wr_np
-            self.vis.ros.draw_text("residualmag", f"{np.round(residual, 2)}", [0.2, 0.5, 0.5], absolute_pos=True)
+        # visualization
+        wr = WrenchStamped()
+        wr.header.frame_id = self.WORLD_FRAME
+        wr.wrench.force.x, wr.wrench.force.y, wr.wrench.force.z, wr.wrench.torque.x, wr.wrench.torque.y, wr.wrench.torque.z = wr_np
+        self.cleaned_wrench_publisher.publish(wr)
 
-            # observe and save contact info
-            info = {}
-            pose = pose_msg_to_pos_quaternion(self.robot.get_link_pose(self.EE_LINK_NAME))
-            self._observe_contact(pose, wr_np, info)
+        # print residual
+        residual = wr_np.T @ self.contact_detector.residual_precision @ wr_np
+        self.vis.ros.draw_text("residualmag", f"{np.round(residual, 2)}", [0.2, 0.5, 0.5], absolute_pos=True)
 
-            info[InfoKeys.HIGH_FREQ_EE_POSE] = np.r_[pose[0], pose[1]]
+        # observe and save contact info
+        info = {}
+        pose = pose_msg_to_pos_quaternion(self.robot.get_link_pose(self.EE_LINK_NAME))
+        # TODO consider if everything needs to be inside this input lock
+        self._observe_contact(pose, wr_np, info)
 
-            # save reaction force
-            info[InfoKeys.HIGH_FREQ_REACTION_F] = wr_np[:3]
-            info[InfoKeys.HIGH_FREQ_REACTION_T] = wr_np[3:]
+        info[InfoKeys.HIGH_FREQ_EE_POSE] = np.r_[pose[0], pose[1]]
 
-            for key, value in info.items():
-                if key not in self._single_step_contact_info:
-                    self._single_step_contact_info[key] = []
-                self._single_step_contact_info[key].append(value)
+        # save reaction force
+        info[InfoKeys.HIGH_FREQ_REACTION_F] = wr_np[:3]
+        info[InfoKeys.HIGH_FREQ_REACTION_T] = wr_np[3:]
+
+        self.digest_info(info)
+
+    def digest_info(self, info):
+        for key, value in info.items():
+            if key not in self._single_step_contact_info:
+                self._single_step_contact_info[key] = []
+            self._single_step_contact_info[key].append(value)
 
     def _observe_contact(self, pose, wrench_np, info):
         pos = pose[0]
@@ -876,9 +887,30 @@ class BubbleCameraContactSensor(ContactSensor):
             self.in_contact = self.cache is not None and self.cache['contact']
 
     def isolate_contact(self, ee_force_torque, pose, q=None, visualizer=None):
+        return self.get_link_frame_deform_points()
+
+    def get_last_obs_time(self):
+        if self.cache is not None:
+            return self.cache['time']
+        return None
+
+    def get_link_frame_deform_points(self):
+        if self.cache is not None and self.cache['contact']:
+            cache = self.get_cache()
+            return self.process_link_frame_deform_points(cache, self.camera)
+        return None
+
+    def get_cached_obs(self, key):
         with self.input_lock:
-            if self.cache is not None and self.cache['contact']:
-                return self._get_link_frame_deform_point(self.cache, self.camera)
+            if self.cache is not None:
+                return self.cache[key]
+        return None
+
+    def get_cache(self):
+        # return a copy of the current cache
+        if self.cache is not None:
+            with self.input_lock:
+                return copy.deepcopy(self.cache)
         return None
 
     def _depth_img_callback(self, img):
@@ -886,15 +918,22 @@ class BubbleCameraContactSensor(ContactSensor):
             self.cache = self._process_depth_img(img, self.ref)
 
     def _process_depth_img(self, img, ref_img):
-        imprint = process_bubble_img(ref_img - img)
+        unfiltered_imprint = ref_img - img
+        imprint = process_bubble_img(unfiltered_imprint)
         # check if any are above threshold
         deform = imprint > self.imprint_threshold
         deform_num = deform.sum()
         deform_significant = deform_num > self.deform_number_threshold
-        return {'ref_img': ref_img, 'depth_img': img, 'imprint': imprint, 'mask': deform, 'mask_num': deform_num,
-                'contact': deform_significant}
+        # stamp current time it was processed
+        obs_time = rospy.Time.now()
+        return {'ref_img': ref_img, 'depth_img': img,
+                'imprint': imprint, 'unfiltered_imprint': unfiltered_imprint,
+                'mask': deform, 'mask_num': deform_num,
+                'contact': deform_significant,
+                'time': obs_time,
+                }
 
-    def _get_link_frame_deform_point(self, cache, camera):
+    def process_link_frame_deform_points(self, cache, camera):
         # return the undeformed point to prevent penetration with the model
         depth_im = cache['ref_img']
         mask = cache['mask']
