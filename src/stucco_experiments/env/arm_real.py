@@ -296,7 +296,6 @@ class RealArmEnv(Env):
             self._temp_wrenches.append(wr_np)
             return
         wr_np -= self.static_wrench
-        logger.info(wr_np)
 
         # wr_np = self._fix_torque_to_planar(wr_np)
 
@@ -304,7 +303,7 @@ class RealArmEnv(Env):
         wr = WrenchStamped()
         wr.header.frame_id = self.WORLD_FRAME
         wr.wrench.force.x, wr.wrench.force.y, wr.wrench.force.z, wr.wrench.torque.x, wr.wrench.torque.y, wr.wrench.torque.z = wr_np
-        self.cleaned_wrench_publisher.publish(wr)
+        # self.cleaned_wrench_publisher.publish(wr)
 
         # print residual
         residual = wr_np.T @ self.contact_detector.residual_precision @ wr_np
@@ -321,6 +320,7 @@ class RealArmEnv(Env):
         # save reaction force
         info[InfoKeys.HIGH_FREQ_REACTION_F] = wr_np[:3]
         info[InfoKeys.HIGH_FREQ_REACTION_T] = wr_np[3:]
+        info[InfoKeys.HIGH_FREQ_WRENCH] = wr_np
 
         self.digest_info(info)
 
